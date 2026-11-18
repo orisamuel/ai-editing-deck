@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>עריכה עם קלוד בלי לפטופ</title>
+<meta name="description" content="המצב היום, האתגרים, היכולות והמשמעויות של עריכה עם קלוד בלי תלות בלפטופ. מצגת להנהלה של 42.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#151A2D">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:title" content="עריכה עם קלוד, בלי תלות בלפטופ">
+<meta property="og:description" content="המצב היום, האתגרים, היכולות והמשמעויות. מצגת להנהלה של 42.">
+<meta property="og:image" content="https://orisamuel.github.io/ai-editing-deck/og.jpg?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://orisamuel.github.io/ai-editing-deck/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Karantina:wght@400;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the 42 deck template (deck-42). One scene per screen: strip + body + nav. RTL throughout. */
+:root{
+  --paper:#ECEFF3; --sheet:#FBFCFD; --ink:#151A2D; --muted:#525A70; --line:#D1D7E1; --soft:#E3E8EF;
+  --marker:#FFCF3A; --marker-ink:#151A2D; --cobalt:#2C45D8; --ok:#1D7A4B; --warn:#A86A12; --bad:#B4413C;
+  --code-bg:#151A2D; --code-fg:#E8EBF4;
+  --f-display:'Karantina','Arial Narrow',Arial,sans-serif;
+  --f-body:'IBM Plex Sans Hebrew','Segoe UI',Arial,sans-serif;
+  --f-mono:'IBM Plex Mono',Consolas,'Courier New',monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0F111A; --sheet:#171A27; --ink:#ECEEF6; --muted:#A3A9BC; --line:#2A2F44; --soft:#20243A;
+  --marker:#FFCF3A; --marker-ink:#151A2D; --cobalt:#8F9DFF; --ok:#5BC48F; --warn:#E8B44A; --bad:#F08A80;
+  --code-bg:#0A0C13; --code-fg:#E8EBF4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0F111A; --sheet:#171A27; --ink:#ECEEF6; --muted:#A3A9BC; --line:#2A2F44; --soft:#20243A;
+  --marker:#FFCF3A; --marker-ink:#151A2D; --cobalt:#8F9DFF; --ok:#5BC48F; --warn:#E8B44A; --bad:#F08A80;
+  --code-bg:#0A0C13; --code-fg:#E8EBF4; color-scheme:dark}
+
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;direction:rtl;padding-inline:16px;padding-block:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;word-break:normal}
+*,*::before,*::after{box-sizing:border-box}
+.app{max-width:1240px;margin-inline:auto;height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;justify-content:space-between}
+.brand{font-family:var(--f-display);font-size:30px;line-height:1;font-weight:700;letter-spacing:.5px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.brand span{background:var(--marker);color:var(--marker-ink);padding:1px 7px 0;border-radius:3px}
+.progress{flex:1;display:flex;gap:3px;min-width:0}
+.progress i{flex:1;height:6px;border-radius:3px;background:var(--line);transition:background .2s}
+.progress i.on{background:var(--ink)}
+.progress i.cur{background:var(--marker)}
+.topbtns{display:flex;gap:8px}
+.iconbtn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.iconbtn:hover{border-color:var(--ink)}
+:focus-visible{outline:3px solid var(--cobalt);outline-offset:2px}
+
+/* sheet */
+.stage{flex:1;min-height:0;position:relative}
+.slide{height:100%;background:var(--sheet);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+[hidden]{display:none!important}
+html.blackout{background:#000!important;cursor:none}html.blackout body{visibility:hidden}
+.strip{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:12px 26px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.strip b{color:var(--ink);font-weight:700}
+.strip .sec{font-weight:700;color:var(--ink);letter-spacing:1.5px}
+.strip .need{margin-inline-start:auto}
+.body{flex:1;overflow-y:auto;padding:30px 26px 32px;display:flex;flex-direction:column;gap:22px}
+.body > *{min-width:0}
+.clap{height:14px;flex:none;background:repeating-linear-gradient(-45deg,var(--ink) 0 16px,var(--marker) 16px 32px)}
+
+h1,h2{font-family:var(--f-display);font-weight:700;line-height:.96;margin:0;text-wrap:balance;letter-spacing:.3px}
+h1{font-size:clamp(68px,13vw,168px)}
+h2{font-size:clamp(46px,7.6vw,88px)}
+h3{font-size:19px;margin:0;font-weight:700;line-height:1.3}
+p{margin:0;max-width:62ch}
+.eyebrow{font-family:var(--f-mono);font-size:13px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;direction:ltr;text-align:right}
+.lead{font-size:clamp(18px,2.1vw,22px);color:var(--muted);max-width:58ch;text-wrap:pretty}
+.muted{color:var(--muted)}
+a{color:var(--cobalt)}
+ul.plain{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:8px;max-width:66ch}
+.ltr{direction:ltr;unicode-bidi:isolate}
+
+/* layouts */
+.split{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;align-items:start}
+.split > *{min-width:0;display:flex;flex-direction:column;gap:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.grid.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.grid.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.card{border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.card .n{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);letter-spacing:1px}
+.card.hl{background:var(--marker);color:var(--marker-ink);border-color:var(--marker)}
+.card.hl .muted,.card.hl .n{color:var(--marker-ink);opacity:.82}
+
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;max-width:780px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--sheet);display:grid;place-items:center;font-weight:700;font-size:15px}
+.steps li > div{padding-top:5px;min-width:0}
+
+.vs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;max-width:1100px}
+.vs .bad{border:1px dashed var(--muted);border-radius:12px;padding:18px}
+.vs .good{border:2px solid var(--ink);border-radius:12px;padding:18px}
+.vs .lab{font-size:12px;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;display:block}
+.vs .bad .lab{color:var(--bad)}
+.vs .good .lab{color:var(--ok)}
+
+.tablewrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;max-width:1100px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;vertical-align:top}
+th{font-size:13px;letter-spacing:1px;color:var(--muted);font-weight:700}
+tr.hi td{background:var(--soft)}
+
+.note{border-inline-start:4px solid var(--marker);padding:4px 14px;max-width:72ch;color:var(--muted)}
+
+/* flow diagram (reads right to left) */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;max-width:1100px}
+.flow .node{flex:1;min-width:0;border:1.5px solid var(--ink);border-radius:12px;padding:14px 16px;background:var(--sheet);display:flex;flex-direction:column;gap:4px}
+.flow .node.hl{background:var(--marker);color:var(--marker-ink);border-color:var(--marker)}
+.flow .node.dark{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.flow .node.dark .muted{color:var(--line)}
+.flow .node .tag{font-family:var(--f-mono);font-size:12px;letter-spacing:1px;opacity:.75;direction:ltr;text-align:right}
+.flow .node b{font-size:18px}
+.flow .arr{flex:none;width:44px;display:grid;place-items:center;color:var(--muted);font-size:26px;line-height:1}
+.flow .arr::before{content:"\2190"}
+
+/* big numbers */
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;max-width:1100px}
+.nums div{border-top:4px solid currentColor;padding-top:10px;display:flex;flex-direction:column;gap:2px}
+.nums b{font-family:var(--f-display);font-size:clamp(72px,10vw,128px);line-height:.9;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* cover + section dividers */
+.slide.dark{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.slide.dark .strip{color:#C9CEDC;border-color:rgba(255,255,255,.14)}
+:root:not([data-theme="dark"]) .slide.dark .strip{color:#C9CEDC}
+.slide.dark .strip b,.slide.dark .strip .sec{color:var(--sheet)}
+.slide.dark .lead,.slide.dark .muted,.slide.dark .eyebrow{color:#C9CEDC}
+.slide.marker{background:var(--marker);color:var(--marker-ink);border-color:var(--marker)}
+.slide.marker .strip,.slide.marker .lead{color:var(--marker-ink)}
+.slide.marker .strip{border-color:rgba(21,26,45,.18)}
+.slide.marker .strip b,.slide.marker .strip .sec{color:var(--marker-ink)}
+.slide.center .body{justify-content:center}
+.divnum{font-family:var(--f-display);font-weight:700;font-size:clamp(120px,22vw,300px);line-height:.8;-webkit-text-stroke:3px var(--marker-ink);color:transparent}
+.agenda{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;max-width:1080px}
+.agenda div{border-top:3px solid currentColor;padding-top:8px;display:flex;flex-direction:column;gap:2px}
+.agenda b{font-family:var(--f-display);font-size:38px;display:block;line-height:1}
+
+/* bottom nav */
+.nav{display:flex;align-items:center;gap:10px;justify-content:space-between;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav button{font:inherit;font-weight:700;border-radius:10px;padding:10px 20px;cursor:pointer;border:1px solid var(--line);background:var(--sheet);color:var(--ink);min-width:100px}
+.nav button.next{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.nav button:disabled{opacity:.35;cursor:default}
+.count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;font-family:var(--f-mono)}
+.keys{font-size:12.5px;color:var(--muted)}
+
+/* overview */
+.over{position:fixed;inset:0;background:var(--paper);z-index:20;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.over-in{max-width:1000px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+.over-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.over-head h3{font-family:var(--f-display);font-size:38px;font-weight:700}
+.over ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:8px}
+.over li button{width:100%;text-align:right;font:inherit;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.over li button .num{font-variant-numeric:tabular-nums;color:var(--muted);min-width:24px;font-family:var(--f-mono);font-size:13px}
+.over li button.is-cur{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.over .grp{font-size:12px;letter-spacing:1.5px;font-weight:700;color:var(--muted);grid-column:1/-1;margin-top:10px}
+
+/* ===== this deck ===== */
+.ico{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:15px;line-height:1.3;border:1.5px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:7px 15px;cursor:pointer}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.toggle{font:inherit;font-weight:700;border:2px solid var(--ink);background:var(--marker);color:var(--marker-ink);border-radius:999px;padding:10px 22px;cursor:pointer}
+.toggle[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.hint{font-size:15px;color:var(--muted)}
+
+/* today: where each part runs */
+.where{display:grid;grid-template-columns:minmax(0,.9fr) 56px minmax(0,1.3fr);align-items:stretch;max-width:1100px}
+.where .box{border:1.5px solid var(--ink);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:var(--sheet)}
+.where .box.cloud{border-style:dashed;background:var(--paper)}
+.where .hd{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.where .hd .ico{width:30px;height:30px}
+.where .items{display:flex;flex-direction:column;gap:8px}
+.where .it{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--paper);font-size:16px}
+.where .box.cloud .it{background:var(--sheet)}
+.where .it small{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.where .it.heavy{background:var(--marker);color:var(--marker-ink);border-color:var(--marker);font-weight:700}
+.where .it.heavy small{color:var(--marker-ink);opacity:.8}
+.where .mid{display:grid;place-items:center;color:var(--muted);font-size:28px}
+.where .mid::before{content:"\21C4"}
+
+/* laptop */
+.lapwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.lap{width:min(100%,470px);perspective:1100px;padding-top:8px}
+.lap-screen{position:relative;aspect-ratio:16/10.5;background:#151A2D;border-radius:14px 14px 4px 4px;padding:10px;margin-inline:6.5%;transform-origin:50% 100%;transition:transform .8s cubic-bezier(.3,.7,.2,1)}
+.lap-in{height:100%;background:#FBFCFD;color:#151A2D;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:11px;overflow:hidden;position:relative}
+.lap-top{display:flex;justify-content:space-between;font-size:12.5px;color:#525A70;font-weight:700}
+.lap-tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.lap-tasks li{display:grid;grid-template-columns:minmax(0,1fr) 28% 52px;gap:10px;align-items:center;font-size:14.5px;line-height:1.3}
+.lap-tasks i{height:7px;border-radius:4px;background:#E3E8EF;overflow:hidden;display:block}
+.lap-tasks i b{display:block;height:100%;border-radius:4px;background:#1D7A4B;width:100%}
+.lap-tasks i b.run{width:42%;background:#2C45D8;animation:runbar 1.5s ease-in-out infinite alternate}
+@keyframes runbar{from{transform:translateX(0)}to{transform:translateX(-138%)}}
+.lap-tasks em{font-style:normal;font-size:12.5px;font-weight:700;color:#1D7A4B;text-align:end}
+.lap-tasks em.r{color:#2C45D8}
+.lap-sleep{position:absolute;inset:0;background:rgba(15,17,26,.5);color:#ECEEF6;display:flex;align-items:flex-start;justify-content:flex-end;padding:10px;opacity:0;transition:opacity .6s;pointer-events:none}
+.lap-sleep .ico{width:30px;height:30px}
+.lap-base{height:16px;background:linear-gradient(#C9CEDC,#8D94A8);border-radius:0 0 16px 16px;position:relative}
+.lap-base::after{content:"";position:absolute;inset-inline:41%;top:0;height:5px;background:#E3E8EF;border-radius:0 0 6px 6px}
+.lap.closed .lap-screen{transform:rotateX(-40deg)}
+.lap.closed .lap-sleep{opacity:1}
+.lap.closed .lap-tasks i b.run{animation-play-state:paused;background:#8D94A8}
+.lap.closed .lap-tasks em.r{color:#B4413C}
+.lapstat{font-weight:700;text-align:center;min-height:3.1em;max-width:40ch}
+
+/* challenge 01: the render race */
+.race{display:flex;flex-direction:column;gap:7px;margin-block:4px}
+.race div{display:grid;grid-template-columns:118px minmax(0,1fr) 74px;gap:10px;align-items:center;font-size:14.5px}
+.race i{display:block;height:12px;border-radius:6px;background:rgba(21,26,45,.12);position:relative;overflow:hidden}
+.race i::after{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:var(--w);min-width:6px;background:var(--marker-ink);border-radius:6px}
+.race b{font-weight:700;text-align:end}
+
+/* pilot timeline */
+.tl{display:flex;flex-direction:column;gap:8px;max-width:1100px}
+.tl-head{font-size:17px}
+.tl-bar{display:flex;height:52px;border-radius:10px;overflow:hidden;gap:2px;background:var(--paper)}
+.tl-seg{font:inherit;border:0;padding:0 6px;cursor:pointer;min-width:0;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;transform-origin:100% 50%}
+.tl-seg span{overflow:hidden;text-overflow:ellipsis}
+.tl-seg.tiny span{display:none}
+.tl-seg.cmp{background:var(--ink);color:var(--sheet)}
+.tl-seg.chk{background:var(--cobalt);color:#fff}
+.tl-seg.plan{background:repeating-linear-gradient(-45deg,var(--soft) 0 8px,var(--line) 8px 16px);color:var(--ink)}
+.tl-seg[aria-pressed="true"]{background:var(--marker);color:var(--marker-ink)}
+.tl-axis{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.tl-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.tl-legend .lg::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:6px;vertical-align:-1px}
+.lg.cmp::before{background:var(--ink)}.lg.chk::before{background:var(--cobalt)}.lg.plan::before{background:var(--line)}
+.tl-info{min-height:3.2em;border-inline-start:4px solid var(--marker);padding:4px 12px;max-width:80ch}
+
+/* three paths */
+.ptabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:1100px}
+.ptab{font:inherit;text-align:start;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:13px 16px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.ptab:hover{border-color:var(--ink)}
+.ptab .row{display:flex;align-items:center;gap:10px}
+.ptab .ico{width:28px;height:28px}
+.ptab b{font-size:18px;line-height:1.2}
+.ptab .badge{margin-inline-start:auto;font-size:12px;font-weight:700;border:1px solid currentColor;border-radius:999px;padding:1px 9px;opacity:.85;white-space:nowrap}
+.ptab .sub{font-size:13.5px;color:var(--muted);padding-inline-start:38px}
+.ptab[aria-selected="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.ptab[aria-selected="true"] .sub{color:var(--line)}
+.ptab.rec[aria-selected="true"]{background:var(--marker);color:var(--marker-ink);border-color:var(--marker)}
+.ptab.rec[aria-selected="true"] .sub{color:var(--marker-ink);opacity:.8}
+.pfacts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:1100px}
+.pf{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--sheet);display:flex;flex-direction:column;gap:3px}
+.pf span{font-size:12.5px;letter-spacing:.5px;color:var(--muted);font-weight:700}
+.pf p{font-size:16px;line-height:1.35}
+
+/* fit: which path for which situation */
+.fit{display:flex;flex-direction:column;gap:14px;max-width:1100px}
+.fitcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fc{border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--paper);display:flex;flex-direction:column;gap:8px}
+.fc .hd{display:flex;align-items:center;gap:10px;font-weight:700}
+.fc .hd .ico{width:26px;height:26px}
+.fc .tag{margin-inline-start:auto;font-size:12px;font-weight:700;border:1px solid currentColor;border-radius:999px;padding:1px 9px;visibility:hidden;white-space:nowrap}
+.fc.best{background:var(--marker);color:var(--marker-ink);border-color:var(--marker)}
+.fc.best .tag{visibility:visible}
+.fc .rate{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+.fc .sym{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex:none;color:#fff}
+.fc.ok .sym{background:var(--ok)}.fc.part .sym{background:var(--warn)}.fc.no .sym{background:var(--bad)}
+:root[data-theme="dark"] .fc .sym{color:#0F111A}
+.fc p{font-size:16px;line-height:1.4}
+.fitsum{font-weight:700}
+
+/* combine: laptop, mac mini, drive */
+.combo{display:flex;flex-direction:column;gap:12px;max-width:1100px}
+.cmap{position:relative;width:100%;height:clamp(220px,31vh,300px);border:1px solid var(--line);border-radius:14px;background:var(--paper);overflow:hidden}
+.clinks{position:absolute;inset:0;width:100%;height:100%}
+.clinks path{fill:none;stroke:var(--line);stroke-width:2.5;stroke-dasharray:2 7;stroke-linecap:round}
+.clinks path.on{stroke:var(--ink);stroke-width:3.5;stroke-dasharray:10 8;animation:flowdash 1.1s linear infinite}
+@keyframes flowdash{to{stroke-dashoffset:-36}}
+.cn{position:absolute;inset-inline-start:var(--x);top:var(--y);transform:translate(50%,-50%);display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--sheet);color:var(--muted);border-radius:12px;padding:8px 12px;transition:background .3s,color .3s,border-color .3s,opacity .3s;white-space:nowrap;z-index:1}
+.cn .ico{width:24px;height:24px}
+.cn b{display:block;font-size:15px;line-height:1.2}
+.cn small{display:block;font-size:12px;opacity:.85}
+.cn.on{border-color:var(--ink);background:var(--ink);color:var(--sheet)}
+.cn.hl.on{background:var(--marker);color:var(--marker-ink);border-color:var(--marker)}
+.cn.off{opacity:.4}
+.cn.off b{text-decoration:line-through}
+.cn[data-n="phone"]{--x:50%;--y:17%}
+.cn[data-n="cloud"]{--x:84%;--y:17%}
+.cn[data-n="laptop"]{--x:16%;--y:55%}
+.cn[data-n="mac"]{--x:84%;--y:55%}
+.cn[data-n="drive"]{--x:50%;--y:84%}
+.ccap{min-height:3.1em;border-inline-start:4px solid var(--marker);padding:4px 12px;max-width:80ch}
+.rule{font-weight:700}
+
+@media (min-width:1100px){
+  body{font-size:20px}
+  h3{font-size:22px}
+  .lead{font-size:23px}
+  .strip{font-size:14.5px}
+  .body{padding:36px 48px 36px;gap:24px}
+  .strip{padding:13px 48px}
+  .where .hd{font-size:20px}
+  .where .it{font-size:18px;padding:10px 14px}
+  .where .it small{font-size:13.5px}
+  .lap-tasks li{font-size:15.5px}
+  .race div{font-size:16px;grid-template-columns:132px minmax(0,1fr) 84px}
+  .chip{font-size:16.5px}
+  .ptab b{font-size:20px}
+  .pf p{font-size:18px}
+  .fc p{font-size:18px}
+  .fc .rate{font-size:18px}
+  .tl-info,.ccap{font-size:19px}
+  td{font-size:18px}
+  .cn b{font-size:16.5px}
+  .cn small{font-size:13px}
+}
+@media (max-width:860px){
+  .split{grid-template-columns:1fr}
+  .flow{flex-direction:column}
+  .flow .arr{width:auto;height:30px}
+  .flow .arr::before{content:"\2193"}
+  .where{grid-template-columns:1fr}
+  .where .mid{height:34px}
+  .where .mid::before{content:"\21C5"}
+  .pfacts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fitcards{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  .strip{padding:10px 16px}
+  .body{padding:22px 16px 24px;gap:16px}
+  .brand{font-size:26px}
+  .brand .bt{display:none}
+  .nav button{min-width:0;padding:10px 14px}
+  .keys{display:none}
+  .ptabs{grid-template-columns:1fr;gap:6px}
+  .ptab{padding:10px 12px}
+  .ptab .sub{display:none}
+  .pfacts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .pf{padding:9px 10px}
+  .pf p{font-size:14.5px}
+  .costs table,.costs tbody,.costs tr,.costs td{display:block;width:100%}
+  .costs tr:first-child{display:none}
+  .costs tr{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--paper)}
+  .costs tr.hi{background:var(--soft)}
+  .costs tr.hi td{background:transparent}
+  .costs td{border:0;padding:3px 0}
+  .costs td[data-l]::before{content:attr(data-l);display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px}
+  .tl-bar{height:44px}
+  .race div{grid-template-columns:100px minmax(0,1fr) 64px;font-size:13.5px}
+  .cmap{height:330px}
+  .cn{padding:6px 9px;gap:6px}
+  .cn small{display:none}
+  .cn b{font-size:14px}
+  .cn[data-n="phone"]{--x:50%;--y:10%}
+  .cn[data-n="cloud"]{--x:76%;--y:31%}
+  .cn[data-n="laptop"]{--x:23%;--y:52%}
+  .cn[data-n="mac"]{--x:76%;--y:69%}
+  .cn[data-n="drive"]{--x:36%;--y:90%}
+}
+@media (prefers-reduced-motion:no-preference){
+  .slide.enter .body > *{animation:rise .42s cubic-bezier(.2,.7,.2,1) both}
+  .slide.enter .body > *:nth-child(2){animation-delay:.05s}
+  .slide.enter .body > *:nth-child(3){animation-delay:.10s}
+  .slide.enter .body > *:nth-child(4){animation-delay:.15s}
+  .slide.enter .body > *:nth-child(5){animation-delay:.20s}
+  .slide.enter .body > *:nth-child(n+6){animation-delay:.25s}
+  @keyframes rise{from{opacity:.25;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .slide.enter .tl-seg{animation:grow .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.25s + var(--i) * .07s)}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:none}}
+  .slide.enter .race i::after{animation:fill 1.3s cubic-bezier(.2,.7,.2,1) .35s both}
+  @keyframes fill{from{width:0}}
+  .pf{animation:rise .3s cubic-bezier(.2,.7,.2,1) both}
+  .fc{animation:rise .3s cubic-bezier(.2,.7,.2,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  .lap-screen{transition:none}
+  .lap-tasks i b.run{animation:none}
+  .clinks path.on{animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .4-7.98A6 6 0 0 0 6.3 9.2 4.7 4.7 0 0 0 7 18.5z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="10.5" rx="1.5"/><path d="M2 18.5h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></symbol>
+  <symbol id="i-mac" viewBox="0 0 24 24"><rect x="3" y="8.5" width="18" height="7" rx="2.5"/><path d="M6.5 12h2"/><path d="M5 18.5h14"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.2l2 2.2h8.8A1.5 1.5 0 0 1 21 9.7v7.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.6A8 8 0 1 1 9.4 4a6.4 6.4 0 0 0 10.6 10.6z"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><span>42</span><b class="bt">עריכה עם AI</b></div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="topbtns">
+      <button class="iconbtn" id="themeBtn" aria-label="החלפה בין מצב בהיר לכהה" title="מצב בהיר או כהה">◐</button>
+      <button class="iconbtn" id="openOver" aria-haspopup="dialog">כל השקופיות</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+
+<section class="slide dark" data-sec="פתיחה" data-title="שער" id="cover">
+  <div class="clap" aria-hidden="true"></div>
+  <div class="strip"><span class="sec">42 · להנהלה</span><span>עריכה ווידאו</span><span class="need">נובמבר 2026</span></div>
+  <div class="body" style="justify-content:center">
+    <p class="eyebrow">AI VIDEO EDITING · 11.2026</p>
+    <h1>עריכה עם קלוד, בלי תלות בלפטופ</h1>
+    <p class="lead">איפה העבודה של קלוד בעריכה רצה היום, מה עוצר אותה, מה בדקנו, ומה ההמלצה.</p>
+    <div class="agenda">
+      <div><b>המצב היום</b>קלוד כבר עובד אצלנו, על הלפטופים</div>
+      <div><b>האתגרים</b>מה נעצר כשהמחשב נסגר</div>
+      <div><b>היכולות</b>ניסוי אמיתי ושלוש דרכים</div>
+      <div><b>המשמעויות</b>עלויות, שינויים והחלטות</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide marker center" data-sec="המצב היום" data-title="פרק: המצב היום" id="sec-today">
+  <div class="clap" aria-hidden="true"></div>
+  <div class="strip"><span class="sec">פרק 1</span></div>
+  <div class="body">
+    <div class="divnum" aria-hidden="true">1</div>
+    <h1>המצב היום</h1>
+    <p class="lead">קלוד כבר עושה חלק גדול מהעבודה הטכנית בעריכה, וכולה רצה על הלפטופים.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="המצב היום" data-title="העבודה עם קלוד היום" id="today">
+  <div class="strip"><span class="sec">המצב היום</span><span>איפה כל חלק רץ</span></div>
+  <div class="body">
+    <h2>העבודה עם קלוד היום</h2>
+    <div class="where">
+      <div class="box cloud">
+        <div class="hd"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-cloud"/></svg>בענן</div>
+        <div class="items">
+          <div class="it">החשיבה של קלוד<small>Anthropic</small></div>
+          <div class="it">ג׳נרוט תמונות, וידאו וקול<small>דרך אפריים</small></div>
+        </div>
+      </div>
+      <div class="mid" aria-hidden="true"></div>
+      <div class="box">
+        <div class="hd"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-laptop"/></svg>על הלפטופ של כל עובדת</div>
+        <div class="items">
+          <div class="it">חיתוך, המרות וכתוביות</div>
+          <div class="it heavy">אנימציות, כותרות ורינדור<small>החלק הכבד</small></div>
+          <div class="it">טיוטות בקאפקאט</div>
+          <div class="it">גופני הבית והלקוח</div>
+          <div class="it">גלם ומסירה, דרך הדרייב שמותקן במחשב</div>
+        </div>
+      </div>
+    </div>
+    <p class="note">הצוות עובד יומיים בשבוע מהבית, וזה עובד. המצגת עוסקת בעבודה של קלוד, שהיום צריכה לפטופ פתוח.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="המצב היום" data-title="התלות בלפטופ פתוח" id="dependency">
+  <div class="strip"><span class="sec">המצב היום</span><span>מה קורה כשהמכסה נסגר</span><span class="need">אפשר ללחוץ</span></div>
+  <div class="body">
+    <h2>התלות בלפטופ פתוח</h2>
+    <div class="split">
+      <div>
+        <p class="lead">קלוד חושב בענן, אבל כל פעולה שלו רצה על הלפטופ. כשהמחשב נסגר או נרדם, העבודה נעצרת באמצע.</p>
+        <p>רינדור שנשאר ללילה, משימה שמתחילה מהטלפון, עבודה שממשיכה בזמן פגישה: היום אף אחד מהם לא אפשרי.</p>
+        <p class="note">נסו לסגור את המכסה.</p>
+      </div>
+      <div class="lapwrap">
+        <div class="lap" id="lap">
+          <div class="lap-screen">
+            <div class="lap-in">
+              <div class="lap-top"><span>קלוד עובד על סרטון</span><span class="ltr">16:42</span></div>
+              <ul class="lap-tasks">
+                <li><span>תמלול הראיון</span><i><b></b></i><em>הושלם</em></li>
+                <li><span>כתוביות מעוצבות</span><i><b class="run"></b></i><em class="r">רץ</em></li>
+                <li><span>כותרת מונפשת</span><i><b class="run" style="animation-delay:-.5s"></b></i><em class="r">רץ</em></li>
+                <li><span>רינדור הסרטון</span><i><b class="run" style="animation-delay:-1s"></b></i><em class="r">רץ</em></li>
+              </ul>
+              <div class="lap-sleep" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-moon"/></svg></div>
+            </div>
+          </div>
+          <div class="lap-base" aria-hidden="true"></div>
+        </div>
+        <button class="toggle" id="lapBtn" aria-pressed="false">לסגור את המכסה</button>
+        <p class="lapstat" id="lapStat" aria-live="polite">קלוד עובד על הלפטופ.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide marker center" data-sec="האתגרים" data-title="פרק: האתגרים" id="sec-challenges">
+  <div class="clap" aria-hidden="true"></div>
+  <div class="strip"><span class="sec">פרק 2</span></div>
+  <div class="body">
+    <div class="divnum" aria-hidden="true">2</div>
+    <h1>האתגרים</h1>
+    <p class="lead">ארבעה דברים שמגבילים את העבודה עם קלוד היום.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="האתגרים" data-title="ארבעה אתגרים" id="challenges">
+  <div class="strip"><span class="sec">האתגרים</span><span>נמדד על לפטופ של 42</span></div>
+  <div class="body">
+    <h2>ארבעה אתגרים</h2>
+    <div class="grid g2">
+      <div class="card hl"><span class="n">01</span><h3>רינדור תופס את המחשב</h3>
+        <div class="race" role="img" aria-label="אותו רינדור: 12 שניות כשהמחשב פנוי, ושעה ליד עבודה כבדה אחרת">
+          <div><span>המחשב פנוי</span><i style="--w:.4%"></i><b>12 שניות</b></div>
+          <div><span>ליד עבודה כבדה</span><i style="--w:100%"></i><b>שעה</b></div>
+        </div>
+        <p class="muted">אותו סופר של שתי שורות. על סוללה חלשה הכול איטי פי 2.5.</p>
+      </div>
+      <div class="card"><span class="n">02</span><h3>העבודה נעצרת עם המכסה</h3><p class="muted">לא משאירים רינדור ללילה, ולא מתחילים עבודה מהטלפון.</p></div>
+      <div class="card"><span class="n">03</span><h3>עבודה לא עוברת בין עובדות</h3><p class="muted">הסשן של קלוד נשאר במחשב שבו התחיל. מעבירים עבודה דרך עותק בדרייב.</p></div>
+      <div class="card"><span class="n">04</span><h3>כל לפטופ צריך התקנה מלאה</h3><p class="muted">ffmpeg, פייתון, Node, כרום, קאפקאט, גופנים ודרייב, בכל מחשב מחדש.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide marker center" data-sec="היכולות" data-title="פרק: היכולות" id="sec-capabilities">
+  <div class="clap" aria-hidden="true"></div>
+  <div class="strip"><span class="sec">פרק 3</span></div>
+  <div class="body">
+    <div class="divnum" aria-hidden="true">3</div>
+    <h1>היכולות</h1>
+    <p class="lead">ניסוי על עבודה אמיתית, ושלוש דרכים להוציא את העבודה מהלפטופ.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="היכולות" data-title="הניסוי בענן" id="pilot">
+  <div class="strip"><span class="sec">היכולות</span><span>הניסוי · 15/11/2026</span><span class="need">אפשר ללחוץ על הציר</span></div>
+  <div class="body">
+    <h2>הניסוי: עריכה בענן מהטלפון</h2>
+    <div class="flow">
+      <div class="node"><span class="tag">INPUT</span><b>הודעה אחת מהטלפון</b><span class="muted">וראיון של 26 שניות מאירוע של לקוח</span></div>
+      <div class="arr" aria-hidden="true"></div>
+      <div class="node hl"><span class="tag">CLOUD</span><b>קלוד בענן, לבד</b><span>תמלול, עריכה, גרפיקה, רינדור, צפייה ותיקונים</span></div>
+      <div class="arr" aria-hidden="true"></div>
+      <div class="node dark"><span class="tag">OUTPUT</span><b>סרטון אנכי של 30 שניות</b><span class="muted">כתוביות מעוצבות, כותרת פתיחה וכרטיס סיום</span></div>
+    </div>
+    <div class="tl">
+      <div class="tl-head"><b>27 דקות, שלב אחרי שלב</b></div>
+      <div class="tl-bar" id="tlBar" role="group" aria-label="ציר הזמן של הניסוי"></div>
+      <div class="tl-axis"><span>ההודעה</span><span>הסרטון, אחרי <span class="ltr">26:48</span> דקות</span></div>
+      <div class="tl-legend"><span class="lg cmp">מחשוב</span><span class="lg chk">צפייה ובדיקות</span><span class="lg plan">תכנון וכתיבה</span></div>
+      <p class="tl-info" id="tlInfo" aria-live="polite">לחצו על קטע בציר כדי לראות מה קרה בו.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide dark center" data-sec="היכולות" data-title="הניסוי במספרים" id="pilot-numbers">
+  <div class="strip"><span class="sec">היכולות</span><span>מקור: היומן של הסשן בענן, ובדיקה נפרדת של הסרטון</span></div>
+  <div class="body">
+    <p class="eyebrow">PILOT · 15.11.2026</p>
+    <div class="nums">
+      <div><b data-count="27">27</b>דקות, מהודעה אחת ועד סרטון מוכן</div>
+      <div><b data-count="17">17</b>דקות בערך של רינדור, הרכבה וקידוד</div>
+      <div><b data-count="5">5</b>תקלות שקלוד מצא בצפייה ותיקן בעצמו</div>
+      <div><b>0</b>דקות עבודה על הלפטופ</div>
+    </div>
+    <p class="lead">הסרטון נבדק גם בנפרד: הסנכרון מדויק בתוך פריים, והעוצמה מינוס 14 LUFS, כמקובל ברשתות.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="היכולות" data-title="הצלחות ופערים" id="pilot-gaps">
+  <div class="strip"><span class="sec">היכולות</span><span>מה הניסוי הראה</span></div>
+  <div class="body">
+    <h2>הצלחות ופערים בניסוי</h2>
+    <div class="vs">
+      <div class="good"><span class="lab">עבד</span>
+        <ul class="plain">
+          <li>תמלול עברית בחינם, בתוך המחשב בענן: 15 שניות ל-26 שניות של דיבור</li>
+          <li>כתוביות וכותרות נכונות מימין לשמאל, עם גרשיים ופיסוק במקום</li>
+          <li>צפייה עצמית בתוצר: מצא שש תקלות ותיקן חמש</li>
+          <li>סנכרון ועוצמה תקינים</li>
+        </ul>
+      </div>
+      <div class="bad"><span class="lab">חסר</span>
+        <ul class="plain">
+          <li>חומרי המותג של הלקוח: אין גישה לדרייב מהענן</li>
+          <li>מוזיקה ואפקטים: אין ספרייה מאושרת בסביבה</li>
+          <li>מסירה: הסרטון הגיע לגיטהאב ולא לדרייב, וקשה לצפות בו מהטלפון</li>
+          <li>שיקול עריכה בטוח ולא חד: פריים ראשון ריק, ושאלה של 9 שניות מתוך 30</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-sec="היכולות" data-title="שלוש דרכים" id="paths">
+  <div class="strip"><span class="sec">היכולות</span><span>איפה רצים החיתוך, הרינדור והקבצים</span><span class="need">אפשר לבחור דרך</span></div>
+  <div class="body">
+    <h2>שלוש דרכים להריץ את קלוד בלי הלפטופ</h2>
+    <p class="lead">בכל הדרכים קלוד חושב בענן כמו היום. ההבדל הוא איפה רצים החיתוך, הרינדור והקבצים.</p>
+    <div class="ptabs" role="tablist" aria-label="שלוש הדרכים" id="pTabs"></div>
+    <div class="pfacts" role="tabpanel" id="pFacts"></div>
+  </div>
+</section>
+
+<section class="slide" data-sec="היכולות" data-title="התאמת הדרך למצב" id="fit">
+  <div class="strip"><span class="sec">היכולות</span><span>איזו דרך מתאימה לאיזה מצב</span><span class="need">אפשר לבחור מצב</span></div>
+  <div class="body">
+    <h2>התאמת הדרך למצב</h2>
+    <div class="fit">
+      <div class="chips" id="fitChips" role="group" aria-label="מצבים"></div>
+      <p class="hint" id="fitD"></p>
+      <div class="fitcards" id="fitCards" aria-live="polite"></div>
+      <p class="fitsum">המק מיני מכסה את רוב המצבים. הענן של Anthropic הוא הגיבוי כשהמשרד סגור.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide marker center" data-sec="המשמעויות" data-title="פרק: המשמעויות" id="sec-implications">
+  <div class="clap" aria-hidden="true"></div>
+  <div class="strip"><span class="sec">פרק 4</span></div>
+  <div class="body">
+    <div class="divnum" aria-hidden="true">4</div>
+    <h1>המשמעויות</h1>
+    <p class="lead">מה זה דורש, כמה זה עולה, ומה משתנה בעבודה.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="המשמעויות" data-title="השילוב" id="combo">
+  <div class="strip"><span class="sec">המשמעויות</span><span>הלפטופ נשאר המחשב העיקרי</span><span class="need">אפשר לבחור מצב</span></div>
+  <div class="body">
+    <h2>השילוב: לפטופ, מק מיני ודרייב</h2>
+    <div class="combo">
+      <div class="chips" id="comboChips" role="group" aria-label="מצבי עבודה"></div>
+      <div class="cmap" id="cmap">
+        <svg class="clinks" id="clinks" aria-hidden="true"></svg>
+        <div class="cn" data-n="phone"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-phone"/></svg><span><b>טלפון</b><small>בדרך, בפגישה</small></span></div>
+        <div class="cn" data-n="laptop"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-laptop"/></svg><span><b>לפטופ</b><small>המחשב העיקרי</small></span></div>
+        <div class="cn" data-n="drive"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-folder"/></svg><span><b>דרייב</b><small>גלם ותוצרים</small></span></div>
+        <div class="cn hl" data-n="mac"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mac"/></svg><span><b>מק מיני במשרד</b><small>תמיד דלוק</small></span></div>
+        <div class="cn" data-n="cloud"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-cloud"/></svg><span><b>הענן של Anthropic</b><small>גיבוי</small></span></div>
+      </div>
+      <p class="ccap" id="ccap" aria-live="polite"></p>
+      <p class="rule">כלל אחד: בתחילת עבודה מחליטים איפה היא רצה. סשן לא עובר ממחשב למחשב באמצע.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-sec="המשמעויות" data-title="עלויות" id="costs">
+  <div class="strip"><span class="sec">המשמעויות</span><span>מקורות: Anthropic, Apple ובאג · נבדק ב-18/11/2026</span></div>
+  <div class="body">
+    <h2>עלויות</h2>
+    <div class="tablewrap costs"><table>
+      <tr><th style="width:21%">דרך</th><th style="width:40%">פעם אחת</th><th>כל חודש</th></tr>
+      <tr><td><b>הענן של Anthropic</b></td><td data-l="פעם אחת">אין</td><td data-l="כל חודש">בתוך המכסה של המושבים</td></tr>
+      <tr class="hi"><td><b>מק מיני במשרד</b></td><td data-l="פעם אחת">3,529 ₪ לדגם הבסיס (<span class="ltr">16GB</span>). לכמה עובדות: <span class="ltr">32GB</span> ו-<span class="ltr">512GB</span>, [מחיר בארץ] (בארה״ב <span class="ltr">$1,499</span>)</td><td data-l="כל חודש">חשמל זניח: 4 וואט במנוחה</td></tr>
+      <tr><td><b>סוכן באפריים</b></td><td data-l="פעם אחת">זמן פיתוח באפריים</td><td data-l="כל חודש">טוקנים לפי שימוש, ועוד 8 סנט לכל שעת ריצה, בחשבון API נפרד. העלות לעבודה עוד לא ידועה</td></tr>
+      <tr><td><b>מושבים, בכל דרך</b></td><td data-l="פעם אחת">אין</td><td data-l="כל חודש">מושב <span class="ltr">Standard</span> ב-<span class="ltr">$20</span> לחודש (בתשלום שנתי). למי שעובדת הרבה: <span class="ltr">Premium</span> ב-<span class="ltr">$100</span></td></tr>
+    </table></div>
+    <p class="note">המק עובד על המכסה של המושבים. עלות נוספת רק למושב לעובדת שעוד אין לה, ולשדרוג ל-<span class="ltr">Premium</span> למי שתגיע למגבלה.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="המשמעויות" data-title="שינויים בעבודה" id="changes">
+  <div class="strip"><span class="sec">המשמעויות</span><span>מה משתנה, ומה צריך לבדוק</span></div>
+  <div class="body">
+    <h2>שינויים בעבודה של הצוות</h2>
+    <div class="grid g3">
+      <div class="card"><span class="n">01</span><h3>ליד השולחן: כמו היום</h3><p class="muted">הלפטופ נשאר המחשב העיקרי, כולל קאפקאט.</p></div>
+      <div class="card hl"><span class="n">02</span><h3>כלל אחד חדש</h3><p class="muted">בתחילת עבודה מחליטים איפה היא רצה. מה שאולי ימשיך מהטלפון מתחיל על המק.</p></div>
+      <div class="card"><span class="n">03</span><h3>החומרים בדרייב</h3><p class="muted">הגלם והתוצרים בדרייב, ששני המחשבים רואים.</p></div>
+      <div class="card"><span class="n">04</span><h3>כל עובדת מהחשבון שלה</h3><p class="muted">מושב ומשתמש משלה במק. חשבון משותף אסור לפי התנאים של Anthropic.</p></div>
+      <div class="card"><span class="n">05</span><h3>חומר של לקוחות</h3><p class="muted">הקבצים נשארים במשרד, אבל השיחה עם קלוד נשמרת אצל Anthropic. לבדוק מול לקוחות עם סעיפי סודיות.</p></div>
+      <div class="card"><span class="n">06</span><h3>גופני הבית</h3><p class="muted">לבדוק שהרישיון מתיר להתקין אותם על מחשב משותף.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-sec="ההמלצה" data-title="ההמלצה וההחלטות" id="recommendation">
+  <div class="clap" aria-hidden="true"></div>
+  <div class="strip"><span class="sec">ההמלצה</span><span>מה מבקשים מההנהלה</span></div>
+  <div class="body">
+    <h2>ההמלצה וההחלטות הנדרשות</h2>
+    <div class="split">
+      <div>
+        <div class="card hl"><span class="n">ההמלצה</span><h3 style="font-size:clamp(22px,2.4vw,28px)">מק מיני במשרד, לצד הלפטופים</h3><p>כל עובדת מתחברת אליו מהחשבון שלה, מהטלפון או מהדפדפן. הענן של Anthropic נשאר גיבוי כשהמשרד סגור. סוכן באפריים רק אם יתברר שכל הצוות צריך לעבוד מכל מכשיר.</p></div>
+      </div>
+      <div>
+        <ol class="steps">
+          <li><div><b>לאשר מק מיני</b> עם <span class="ltr">32GB</span> זיכרון ו-<span class="ltr">512GB</span> ([מחיר בארץ])</div></li>
+          <li><div><b>חודש ניסיון</b> עם שני משתמשים, על עבודות אמיתיות</div></li>
+          <li><div><b>לבדוק רישיון</b> של גופני הבית למחשב משותף</div></li>
+          <li><div><b>למדוד</b> זמני רינדור מול לפטופ, ניצול המכסה, וכמה עבודות עברו למק</div></li>
+        </ol>
+        <p class="note">בסוף החודש מחליטים אם להרחיב לכל הצוות.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide marker center" data-sec="סיום" data-title="סיום" id="end">
+  <div class="strip"><span class="sec">סיום</span></div>
+  <div class="body">
+    <h1>שאלות?</h1>
+    <p class="lead">תודה.</p>
+  </div>
+</section>
+
+  </main>
+
+  <nav class="nav" aria-label="ניווט בין שקופיות">
+    <button id="prev">הקודם</button>
+    <span class="count"><span id="count" aria-live="polite"></span> <span class="keys">· חיצים במקלדת</span></span>
+    <button id="next" class="next">הבא</button>
+  </nav>
+</div>
+
+<div class="over" id="over" role="dialog" aria-modal="true" aria-label="כל השקופיות" hidden>
+  <div class="over-in">
+    <div class="over-head"><h3>כל השקופיות</h3><button class="iconbtn" id="closeOver">סגירה</button></div>
+    <ol id="overList"></ol>
+  </div>
+</div>
+
+<script>
+/* interactions of this deck. Runs before the deck script, so it hears the first 'slideenter'. */
+(function(){
+  var RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function $(id){return document.getElementById(id)}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function ico(id){return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#'+id+'"/></svg>'}
+  function each(list,fn){Array.prototype.forEach.call(list,fn)}
+  var mem={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+  /* theme */
+  var root=document.documentElement,THEME='deck-ai-editing-theme';
+  var saved=mem.get(THEME);if(saved==='dark'||saved==='light')root.setAttribute('data-theme',saved);
+  $('themeBtn').addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');
+    var next=cur==='dark'?'light':'dark';root.setAttribute('data-theme',next);mem.set(THEME,next);
+  });
+
+  /* the laptop lid */
+  var lap=$('lap'),lapBtn=$('lapBtn'),lapStat=$('lapStat');
+  lapBtn.addEventListener('click',function(){
+    var closed=!lap.classList.contains('closed');
+    lap.classList.toggle('closed',closed);
+    lapBtn.setAttribute('aria-pressed',String(closed));
+    lapBtn.textContent=closed?'לפתוח את המכסה':'לסגור את המכסה';
+    each(lap.querySelectorAll('em.r'),function(e){e.textContent=closed?'נעצר':'רץ'});
+    lapStat.textContent=closed?'שלוש משימות נעצרו באמצע. הן ימשיכו רק כשיפתחו את המחשב.':'קלוד עובד על הלפטופ.';
+  });
+
+  /* pilot timeline: seconds per stage, from the cloud session's log (15/11/2026) */
+  var TL=[
+    {t:'הכנה ותמלול',s:46,c:'cmp',d:'התקנה של 3 שניות, תמלול עברית של 15 שניות, ועוד שתי ריצות בדיקה של 14 שניות.'},
+    {t:'התאמת הצילום',s:101,c:'cmp',d:'המרה של צילום האייפון לפורמט של הסרטון: 72 שניות, ושוב 29 אחרי תיקון.'},
+    {t:'כותרת פתיחה',s:86,c:'cmp',d:'רינדור של 39 שניות, ושוב 47 אחרי תיקון צבע.'},
+    {t:'כרטיס סיום',s:238,c:'cmp',d:'הרקע רונדר שלוש פעמים (68, 71 ו-75 שניות), ומעליו הלוגו של 42.'},
+    {t:'כתוביות',s:267,c:'cmp',d:'131 שניות, ושוב 136 אחרי תיקון של הכתובית האחרונה.'},
+    {t:'הרכבה וקידוד',s:251,c:'cmp',d:'הרכבה של 102 ו-110 שניות, נרמול סאונד, וקידוד של 18 ו-20 שניות.'},
+    {t:'צפייה ובדיקות',s:180,c:'chk',d:'כ-3 דקות: הפריים הראשון, כל מעבר וכל כתובית.'},
+    {t:'תכנון וכתיבה',s:439,c:'plan',d:'השאר: הבנת המשימה, כתיבת הסצנות והקוד, והיומן.'}
+  ];
+  function mmss(s){var m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r}
+  var tlBar=$('tlBar'),tlInfo=$('tlInfo');
+  var hover=!!(window.matchMedia&&matchMedia('(hover: hover)').matches);
+  TL.forEach(function(x,i){
+    var b=document.createElement('button');
+    b.className='tl-seg '+x.c;b.style.flex=x.s+' 1 0';b.style.setProperty('--i',i);
+    b.setAttribute('aria-pressed','false');b.setAttribute('aria-label',x.t+', '+mmss(x.s)+' דקות');
+    b.innerHTML='<span>'+esc(x.t)+'</span>';
+    b.addEventListener('click',function(){pickTL(i)});
+    if(hover)b.addEventListener('mouseenter',function(){pickTL(i)});
+    tlBar.appendChild(b);
+  });
+  function pickTL(i){
+    each(tlBar.children,function(c,j){c.setAttribute('aria-pressed',String(j===i))});
+    var x=TL[i];tlInfo.innerHTML='<b>'+esc(x.t)+' · <span class="ltr">'+mmss(x.s)+'</span> דקות.</b> '+esc(x.d);
+  }
+  function fitTL(){each(tlBar.children,function(c){c.classList.toggle('tiny',c.clientWidth<84)})}
+
+  /* three paths */
+  var PATHS=[
+    {k:'cloud',icon:'i-cloud',name:'הענן של Anthropic',sub:'קלוד קוד בענן',badge:'נוסה בניסוי',rows:[
+      ['מפעילים','מהטלפון, מהדפדפן או מהאפליקציה'],['איפה זה רץ','מחשב של Anthropic, עם 4 ליבות ו-16GB'],
+      ['מי עובדת','רק מי שפתחה את הסשן. אחרות צופות'],['גלם ומסירה','דרך מאגר בגיטהאב. אין גישה לדרייב'],
+      ['קאפקאט','לא. אין לו גרסה ללינוקס'],['עלות','בתוך המכסה של המושב'],
+      ['מגבלה','פקודה נעצרת אחרי 10 דקות'],['חומר של לקוח','עובר לגיטהאב ולענן']]},
+    {k:'mac',icon:'i-mac',name:'מק מיני במשרד',sub:'שליטה מרחוק מהחשבון של כל עובדת',badge:'ההמלצה',rec:true,rows:[
+      ['מפעילים','מהטלפון או מהדפדפן, כל אחת מהחשבון שלה'],['איפה זה רץ','מק מיני במשרד, שתמיד דלוק'],
+      ['מי עובדת','כל עובדת עם מושב, מהמשתמש שלה במק'],['גלם ומסירה','ישר מהדרייב, ובחזרה לדרייב'],
+      ['קאפקאט','כן. עורכים דרך חיבור למסך של המק'],['עלות','חומרה חד פעמית, בלי טוקנים'],
+      ['מגבלה','תלוי בחשמל ובאינטרנט של המשרד'],['חומר של לקוח','הקבצים נשארים במשרד']]},
+    {k:'agent',icon:'i-grid',name:'סוכן באפריים',sub:'שירות של Anthropic, בבטא',badge:'לעתיד',rows:[
+      ['מפעילים','מאפריים, מכל מכשיר'],['איפה זה רץ','מחשב של Anthropic, עם 8GB זיכרון ו-10GB דיסק'],
+      ['מי עובדת','כל הצוות. העבודה שמורה באפריים'],['גלם ומסירה','הורדה מהדרייב, והתוצר חוזר לדרייב'],
+      ['קאפקאט','לא'],['עלות','פיתוח, ואז טוקנים לפי שימוש'],
+      ['מגבלה','העלות לעבודה עוד לא ידועה'],['חומר של לקוח','עובר לענן, והשיחות נשמרות עד שמוחקים']]}
+  ];
+  var pTabs=$('pTabs'),pFacts=$('pFacts');
+  PATHS.forEach(function(p,i){
+    var b=document.createElement('button');b.className='ptab'+(p.rec?' rec':'');b.id='ptab-'+p.k;b.setAttribute('role','tab');
+    b.innerHTML='<span class="row">'+ico(p.icon)+'<b>'+esc(p.name)+'</b><span class="badge">'+esc(p.badge)+'</span></span><span class="sub">'+esc(p.sub)+'</span>';
+    b.addEventListener('click',function(){pickPath(i)});pTabs.appendChild(b);
+  });
+  function pickPath(i){
+    each(pTabs.children,function(c,j){c.setAttribute('aria-selected',String(j===i));c.tabIndex=j===i?0:-1});
+    pFacts.setAttribute('aria-labelledby','ptab-'+PATHS[i].k);
+    pFacts.innerHTML=PATHS[i].rows.map(function(r,j){return '<div class="pf" style="animation-delay:'+(j*.03).toFixed(2)+'s"><span>'+esc(r[0])+'</span><p>'+esc(r[1])+'</p></div>'}).join('');
+  }
+  pickPath(0);
+
+  /* which path for which situation */
+  var NAMES={cloud:['הענן של Anthropic','i-cloud'],mac:['מק מיני במשרד','i-mac'],agent:['סוכן באפריים','i-grid']};
+  var SYM={ok:'✓',part:'◐',no:'✕'},LBL={ok:'מתאים',part:'חלקית',no:'לא מתאים'};
+  var SCEN=[
+    {t:'משימה מהטלפון',d:'למשל כתוביות לסרטון שכבר בדרייב.',best:'mac',r:{cloud:['part','עובד, אבל הקובץ צריך להגיע קודם לגיטהאב'],mac:['ok','רץ במשרד ורואה את הדרייב'],agent:['ok','נפתח מאפריים בכל מכשיר']}},
+    {t:'רינדור ארוך בלילה',d:'עבודה שנמשכת שעות, בלי מישהו ליד המחשב.',best:'mac',r:{cloud:['part','פקודה נעצרת אחרי 10 דקות, וצריך לפצל'],mac:['ok','דלוק כל הזמן, בלי הגבלת זמן'],agent:['ok','ממשיך לבד, ומשלמים לפי שעות']}},
+    {t:'לפטופ עמוס או על סוללה',d:'העובדת צריכה את המחשב לעבודה אחרת.',best:'mac',r:{cloud:['ok','הרינדור לא תופס את הלפטופ'],mac:['ok','הרינדור לא תופס את הלפטופ, והגלם כבר בדרייב'],agent:['ok','הרינדור לא תופס את הלפטופ']}},
+    {t:'עבודה שעוברת בין עובדות',d:'אחת מתחילה, אחרת ממשיכה.',best:'agent',r:{cloud:['no','אחרות רק צופות בסשן'],mac:['part','הקבצים בדרייב, אבל הסשן שייך למי שפתחה אותו'],agent:['ok','העבודה שמורה באפריים, וכל אחת ממשיכה ממנה']}},
+    {t:'כמה גרסאות במקביל',d:'למשל שתי מודעות להשוואה.',best:'agent',r:{cloud:['ok','כל סשן מקבל מחשב משלו'],mac:['part','רינדורים במקביל מאטים זה את זה'],agent:['ok','סשנים במקביל, לכל אחד תקרת עלות']}},
+    {t:'המשרד סגור',d:'הפסקת חשמל, תקלה באינטרנט, מלחמה.',best:'cloud',r:{cloud:['ok','לא תלוי במשרד, ועובד כבר היום'],mac:['no','המק במשרד לא זמין'],agent:['ok','לא תלוי במשרד']}},
+    {t:'צריך טיימליין בקאפקאט',d:'עבודה שהעורכת רוצה להמשיך בעצמה.',best:'mac',r:{cloud:['no','אין קאפקאט בענן'],mac:['ok','קאפקאט מותקן, ועורכים דרך חיבור למסך'],agent:['no','אין קאפקאט בענן']}},
+    {t:'חומר רגיש של לקוח',d:'לקוח עם סעיפי סודיות.',best:'mac',r:{cloud:['part','הקבצים עוברים לגיטהאב ולענן'],mac:['ok','הקבצים נשארים במשרד'],agent:['part','הקבצים עוברים לענן, והשיחות נשמרות']}}
+  ];
+  var fitChips=$('fitChips'),fitCards=$('fitCards'),fitD=$('fitD');
+  SCEN.forEach(function(s,i){var b=document.createElement('button');b.className='chip';b.textContent=s.t;b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){pickFit(i)});fitChips.appendChild(b)});
+  function pickFit(i){
+    each(fitChips.children,function(c,j){c.setAttribute('aria-pressed',String(j===i))});
+    var s=SCEN[i];fitD.textContent=s.d||'';
+    fitCards.innerHTML=['cloud','mac','agent'].map(function(k,j){var r=s.r[k];
+      return '<div class="fc '+r[0]+(s.best===k?' best':'')+'" style="animation-delay:'+(j*.05).toFixed(2)+'s"><div class="hd">'+ico(NAMES[k][1])+esc(NAMES[k][0])+'<span class="tag">הכי מתאים</span></div><div class="rate"><span class="sym" aria-hidden="true">'+SYM[r[0]]+'</span>'+LBL[r[0]]+'</div><p>'+esc(r[1])+'</p></div>'}).join('');
+  }
+  pickFit(0);
+
+  /* laptop, mac mini and drive */
+  var MODES=[
+    {t:'ליד השולחן',nodes:['laptop','drive'],edges:['laptop-drive'],cap:'עבודה רגילה וקאפקאט על הלפטופ, כמו היום. הגלם והתוצרים בדרייב.'},
+    {t:'מהטלפון',nodes:['phone','mac','drive'],edges:['phone-mac','mac-drive'],cap:'פותחים סשן על המק מהטלפון. הוא לוקח את הגלם מהדרייב ומחזיר לשם את הסרטון.'},
+    {t:'רינדור ארוך',nodes:['laptop','mac','drive'],edges:['laptop-mac','mac-drive'],cap:'מתחילים את העבודה על המק מהדפדפן, וסוגרים את הלפטופ. הסרטון מחכה בדרייב.'},
+    {t:'המשרד סגור',nodes:['phone','cloud'],edges:['phone-cloud'],off:['mac'],cap:'הענן של Anthropic, כמו בניסוי. בלי הדרייב ובלי קאפקאט.'}
+  ];
+  var EDGES=['laptop-drive','mac-drive','phone-mac','laptop-mac','phone-cloud'];
+  var NS='http://www.w3.org/2000/svg',cmap=$('cmap'),svg=$('clinks'),ccap=$('ccap'),comboChips=$('comboChips');
+  EDGES.forEach(function(e){var p=document.createElementNS(NS,'path');p.setAttribute('data-e',e);svg.appendChild(p)});
+  MODES.forEach(function(m,i){var b=document.createElement('button');b.className='chip';b.textContent=m.t;b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){pickMode(i)});comboChips.appendChild(b)});
+  function centerOf(n,box){var r=cmap.querySelector('[data-n="'+n+'"]').getBoundingClientRect();return [r.left-box.left+r.width/2,r.top-box.top+r.height/2]}
+  function drawCombo(){
+    var box=cmap.getBoundingClientRect();if(!box.width)return;
+    svg.setAttribute('viewBox','0 0 '+box.width.toFixed(1)+' '+box.height.toFixed(1));
+    each(svg.children,function(p){var ab=p.getAttribute('data-e').split('-'),a=centerOf(ab[0],box),b=centerOf(ab[1],box);
+      var mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2-Math.abs(a[0]-b[0])*.08;
+      p.setAttribute('d','M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' Q'+mx.toFixed(1)+' '+my.toFixed(1)+' '+b[0].toFixed(1)+' '+b[1].toFixed(1))});
+  }
+  function pickMode(i){
+    var m=MODES[i];
+    each(comboChips.children,function(c,j){c.setAttribute('aria-pressed',String(j===i))});
+    each(cmap.querySelectorAll('.cn'),function(n){var k=n.getAttribute('data-n');n.classList.toggle('on',m.nodes.indexOf(k)>=0);n.classList.toggle('off',!!(m.off&&m.off.indexOf(k)>=0))});
+    each(svg.children,function(p){p.classList.toggle('on',m.edges.indexOf(p.getAttribute('data-e'))>=0)});
+    ccap.textContent=m.cap;
+  }
+  pickMode(0);
+
+  /* numbers count up when their slide opens */
+  function countUp(scope){
+    each(scope.querySelectorAll('[data-count]'),function(el){
+      var to=+el.getAttribute('data-count');
+      if(RM){el.textContent=to;return}
+      var t0=null;el.textContent='0';
+      function step(ts){if(t0===null)t0=ts;var p=Math.min(1,(ts-t0)/900);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(step)}
+      requestAnimationFrame(step);
+      setTimeout(function(){el.textContent=to},1100); /* rAF stops in a background tab */
+    });
+  }
+
+  function relayout(){drawCombo();fitTL()}
+  document.addEventListener('slideenter',function(e){
+    var id=e.detail.id;
+    if(id==='combo'||id==='pilot'){requestAnimationFrame(relayout);setTimeout(relayout,80);setTimeout(relayout,500)}
+    if(id==='pilot-numbers')countUp(e.detail.el);
+  });
+  window.addEventListener('resize',relayout);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(relayout);
+})();
+</script>
+<script>
+/* the deck: navigation, overview, presenter keys (deck-42 template) */
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var store={get:function(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+  var KEY='deck-ai-editing';
+  var cur=0;
+  var progress=document.getElementById('progress');
+  slides.forEach(function(){progress.appendChild(document.createElement('i'))});
+  var bars=[].slice.call(progress.children);
+
+  function idx(id){for(var i=0;i<slides.length;i++){if(slides[i].id===id)return i}return -1}
+  function show(i){
+    cur=Math.max(0,Math.min(slides.length-1,i));
+    slides.forEach(function(s,j){s.hidden=j!==cur;s.classList.remove('enter')});
+    var s=slides[cur];void s.offsetWidth;s.classList.add('enter');
+    bars.forEach(function(b,j){b.className=j<cur?'on':(j===cur?'cur':'')});
+    document.getElementById('count').textContent=(cur+1)+' / '+slides.length;
+    document.getElementById('prev').disabled=cur===0;
+    document.getElementById('next').disabled=cur===slides.length-1;
+    try{history.replaceState(null,'','#'+s.id)}catch(e){}
+    store.set(KEY+'-cur',s.id);
+    var b=s.querySelector('.body');if(b)b.scrollTop=0;
+    try{document.dispatchEvent(new CustomEvent('slideenter',{detail:{id:s.id,el:s}}))}catch(e){}
+  }
+  document.getElementById('prev').addEventListener('click',function(){show(cur-1)});
+  document.getElementById('next').addEventListener('click',function(){show(cur+1)});
+  document.addEventListener('keydown',function(e){
+    if(!document.getElementById('over').hidden){if(e.key==='Escape')closeOver();return}
+    var onControl=e.target&&/^(input|textarea|select|button|a)$/i.test(e.target.tagName);
+    if(onControl&&(e.key===' '||e.key==='Enter'))return;
+    if(e.code==='KeyB'&&!e.ctrlKey&&!e.metaKey){document.documentElement.classList.toggle('blackout');return}
+    if(e.code==='KeyF'&&!e.ctrlKey&&!e.metaKey){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen()}catch(err){}return}
+    if(e.key==='ArrowLeft'||e.key==='PageDown'||e.key===' '||e.key==='Enter'){e.preventDefault();show(cur+1)}
+    else if(e.key==='ArrowRight'||e.key==='PageUp'){e.preventDefault();show(cur-1)}
+    else if(e.key==='Home'){show(0)}else if(e.key==='End'){show(slides.length-1)}
+  });
+  var sx=null,sy=null;var stage=document.getElementById('stage');
+  stage.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  stage.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){show(cur+(dx>0?1:-1))}sx=null},{passive:true});
+  var over=document.getElementById('over'),list=document.getElementById('overList');
+  function renderOver(){
+    list.innerHTML='';var last='';
+    slides.forEach(function(s,j){
+      var sec=s.getAttribute('data-sec');
+      if(sec!==last){var g=document.createElement('li');g.className='grp';g.textContent=sec;list.appendChild(g);last=sec}
+      var li=document.createElement('li');var b=document.createElement('button');
+      var n=document.createElement('span');n.className='num';n.textContent=String(j+1).padStart(2,'0');
+      var t=document.createElement('span');t.textContent=s.getAttribute('data-title');
+      b.appendChild(n);b.appendChild(t);
+      if(j===cur)b.classList.add('is-cur');
+      b.addEventListener('click',function(){closeOver();show(j)});
+      li.appendChild(b);list.appendChild(li);
+    });
+  }
+  function openOver(){renderOver();over.hidden=false;document.getElementById('closeOver').focus()}
+  function closeOver(){over.hidden=true;document.getElementById('openOver').focus()}
+  document.getElementById('openOver').addEventListener('click',openOver);
+  document.getElementById('closeOver').addEventListener('click',closeOver);
+  window.addEventListener('hashchange',function(){var i=idx((location.hash||'').slice(1));if(i>=0&&i!==cur)show(i)});
+  var h=(location.hash||'').slice(1);var start=idx(h);
+  if(start<0){var saved=store.get(KEY+'-cur');start=saved?idx(saved):0}
+  show(start<0?0:start);
+})();
+</script>
+</body>
+</html>
